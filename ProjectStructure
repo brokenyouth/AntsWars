@@ -1,0 +1,13 @@
+Model
+    Des foumis
+    Un terrain ou les fourmis peuvent bouger
+    Des obstacles
+    Des fourmis ennemis
+    Des catastrophes naturelles?
+Controllers
+    main loop et input handler
+    le controller gère les inputs du joueur (clavier, souris)
+    simule le combat des fourmis
+Views
+    partie graphique
+    dessine tout à l'écran
