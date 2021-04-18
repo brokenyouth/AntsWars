@@ -1,6 +1,7 @@
 import pygame
 from Model_Ant import *
 from Model_Obstacle import *
+from Model_Anthil import *
 from Renderer import *
 from Util import *
 class GameEngine():
@@ -14,24 +15,34 @@ class GameEngine():
 
         self.surfaceWidth = self.surface.get_width()
         self.surfaceHeight = self.surface.get_height()
+    
+    def initGame(self, nbAnthils, nbAntPerAnthil ):
+        for n in range(nbAnthils):
+            x, y = DEFAULT_ANTHIL_POSITIONS[ n % len(DEFAULT_ANTHIL_POSITIONS) ]
+            color = DEFAULT_ANTHIL_COLOR[ n % len(DEFAULT_ANTHIL_POSITIONS) ]
+            anthil = Anthil(x , y  , nbAntPerAnthil, color)
+            for i in range(nbAntPerAnthil):
+                ant = Ant(x, y, getRandRange(2 * PI), color, i)
+                ant.lastDirectionUpdate = getRandUnder(100) * 0.01 * DIRECTIONUPDATERATE
+                ant.color = color # mettre un setColor ici plus tard
+                anthil.addAnt( ant )
+            self.world.addAnthil( x, y, anthil )
+        
+        obstacle = Obstacle(self.surfaceWidth//2, self.surfaceHeight//2, (255, 255, 255, 255))
+        print(obstacle)
+        #self.world.addObstacle(obstacle.getX(), obstacle.getY(), obstacle.getColor())
 
     def start(self):
-        self.renderer = Renderer(self.surface, self.world)
-
-        ant_id = 0
-        for k in range(0, 100):
-            x, y = (self.worldSizeX//2), (self.worldSizeY//2)
-            ant = Ant(x*TILZSIZE, y*TILZSIZE, getRandRange(2 * PI), ant_id)
-            ant.lastDirectionUpdate = getRandUnder(100) * 0.01 * DIRECTIONUPDATERATE
-            self.world.addAnt(x, y, ant)
-            ant_id += 1
+        bg = self.manager.get_theme().get_colour('dark_bg')
+        self.renderer = Renderer(self.surface, self.world, bg)
+        self.initGame( 4, 100 ) # 4 by 20
 
     def handleEvent(self, _event):
         if _event.type == pygame.K_SPACE:
             pass
     
-    def updateAnts(self, dt):
-        for ant in self.world.getAnts():
+    def updateAnts(self, anthil, dt):
+        for ant in anthil.getAnts():
             ant_direction = ant.getDirection()
             dirX, dirY = ant_direction.getVec()
             x = (MOVESPEED * dt) * dirX
@@ -54,14 +65,11 @@ class GameEngine():
 
             ant.addPosition(x,y)
             ant.direction.update(dt)
-            #print('ant dir -> ', ant.getDirection().getVec())
-            #print('ant angle -> ', ant.getAngle())
-
-            #print('Ant position : {} / {}'.format(ant.x, ant.y))
 
     def update(self, dt):
         self.manager.update(dt)
-        self.updateAnts(dt)
+        for anthil in self.world.getAnthils():
+            self.updateAnts(anthil, dt)
 
     def render(self):
         self.renderer.render()

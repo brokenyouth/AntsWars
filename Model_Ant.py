@@ -2,10 +2,11 @@ import math
 from Util import *
 class Ant():
 
-    def __init__(self, _x, _y, _angle, _id):
+    def __init__(self, _x, _y, _angle, _color, _id):
         self.x = _x
         self.y = _y
         self.angle = _angle
+        self.color = _color
         self.id = _id
 
         self.health = 100

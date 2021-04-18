@@ -1,5 +1,6 @@
 import math
 import random
+from Util import *
 
 class Terrain():
 
@@ -10,6 +11,8 @@ class Terrain():
 
         self.grid = [[0 for x in range(self.width)] for y in range(self.height)]
         print('grid len -> ', len(self.grid), len(self.grid[0]), 'total size ->', len(self.grid) * len(self.grid[0]) )
+
+        self.listAnthils = []
         self.listObstacles = []
         self.listRessource = []
         self.listAnts = []
@@ -20,27 +23,27 @@ class Terrain():
     def getRessources(self):
         return self.listRessource
 
-    def getAnts(self):
-        return self.listAnts
+    def getAnthils(self):
+        return self.listAnthils
+
+    def addAnthil(self, x, y, _anthil):
+        # -- check bounds
+        self.grid[y // TILZSIZE ][x // TILZSIZE] = _anthil
+        self.listAnthils.append( _anthil )
     
     def addObstacle(self, x, y, _obstacle):
         # -- check bounds
-        self.grid[y][x] = _obstacle
-        self.listObstacles.append( (x, y, _obstacle) )
+        self.grid[y // TILZSIZE][x // TILZSIZE] = _obstacle
+        self.listObstacles.append( _obstacle )
     
     def addRessource(self, x, y, _ressource):
         # -- check bounds
-        self.grid[y][x] = _ressource
-        self.listRessource.append( (x, y, _ressource) )
-    
-    def addAnt(self, x, y, _ant):
-        # -- check bounds
-        self.grid[y][x] = _ant
-        self.listAnts.append( _ant )
+        self.grid[y // TILZSIZE][x // TILZSIZE] = _ressource
+        self.listRessource.append( _ressource )
     
     def getAt(self, x, y):
         # -- add bounds check
-        return self.grid[y][x]
+        return self.grid[y // TILZSIZE][x // TILZSIZE]
     
     def getDimensions(self):
         return self.width, self.height

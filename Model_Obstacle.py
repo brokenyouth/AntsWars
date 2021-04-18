@@ -1,13 +1,13 @@
 class Obstacle():
 
-    def __init__(self, _x, _y, _content):
+    def __init__(self, _x, _y, _color):
         self.x = _x
         self.y = _y
-        self.content = _content
+        self.color = _color
 
     def getX(self):
         return self.x
     def getY(self):
         return self.y
-    def getContent(self):
-        return self.content
+    def getColor(self):
+        return self.color
