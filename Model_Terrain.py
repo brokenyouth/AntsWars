@@ -16,6 +16,10 @@ class Terrain():
         self.listObstacles = []
         self.listRessource = []
         self.listAnts = []
+        self.listSpiders = []
+
+    def getSpiders(self):
+        return self.listSpiders
     
     def getObstacles(self):
         return self.listObstacles
@@ -25,6 +29,11 @@ class Terrain():
 
     def getAnthils(self):
         return self.listAnthils
+
+    def addSpider(self, x, y, _spider):
+        # -- check bounds
+        self.grid[y // TILZSIZE ][x // TILZSIZE] = _spider
+        self.listSpiders.append( _spider )
 
     def addAnthil(self, x, y, _anthil):
         # -- check bounds
