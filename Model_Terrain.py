@@ -56,3 +56,12 @@ class Terrain():
     
     def getDimensions(self):
         return self.width, self.height
+    
+    def reset(self):
+        self.grid = [[0 for x in range(self.width)] for y in range(self.height)]
+        self.listAnthils = []
+        self.listObstacles = []
+        self.listRessource = []
+        self.listAnts = []
+        self.listSpiders = []
+        
