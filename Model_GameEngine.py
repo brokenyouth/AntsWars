@@ -6,6 +6,8 @@ from Model_Anthil import *
 from Model_Spider import *
 from Renderer import *
 from Util import *
+
+
 class GameEngine():
 
     def __init__(self, _world, _mngr, _surface):
@@ -18,20 +20,23 @@ class GameEngine():
         self.surfaceWidth = self.surface.get_width()
         self.surfaceHeight = self.surface.get_height()
 
+    def addAnthilAt(self, x, y, size):
+        rnd = random.randrange(4)
+        color = DEFAULT_ANTHIL_COLOR[ rnd % len(DEFAULT_ANTHIL_COLOR) ]
+        anthil = Anthil( x , y  , size, color )
+        for i in range(size):
+            ant = Ant( x, y, getRandRange( 2 * PI ), color, i )
+            ant.lastDirectionUpdate = getRandUnder(100) * 0.01 * DIRECTIONUPDATERATE
+            ant.color = color
+            anthil.addAnt( ant )
+        self.world.addAnthil( x, y, anthil )
     
     def initGame(self, nbAnthils, nbAntPerAnthil ):
         for n in range(nbAnthils):
-            x, y = DEFAULT_ANTHIL_POSITIONS[ n % len(DEFAULT_ANTHIL_POSITIONS) ]
-            color = DEFAULT_ANTHIL_COLOR[ n % len(DEFAULT_ANTHIL_POSITIONS) ]
-            anthil = Anthil( x , y  , nbAntPerAnthil, color )
-            for i in range(nbAntPerAnthil):
-                ant = Ant( x, y, getRandRange( 2 * PI ), color, i )
-                ant.lastDirectionUpdate = getRandUnder(100) * 0.01 * DIRECTIONUPDATERATE
-                ant.color = color # mettre un setColor ici plus tard
-                anthil.addAnt( ant )
-            self.world.addAnthil( x, y, anthil )
+            x, y = DEFAULT_ANTHIL_POSITIONS[ n ]
+            self.addAnthilAt( x, y, nbAntPerAnthil )
         
-        spider = Spider( random.randrange(0, self.worldSizeX) * TILZSIZE, random.randrange(0, self.worldSizeY) * TILZSIZE, getRandRange( 2 * PI ), color, 0 )
+        spider = Spider( random.randrange(0, self.worldSizeX) * TILZSIZE, random.randrange(0, self.worldSizeY) * TILZSIZE, getRandRange( 2 * PI ), 0 )
         spider.lastDirectionUpdate = getRandUnder(100) * 0.01 * DIRECTIONUPDATERATE
 
         self.world.addSpider(spider.x, spider.y, spider)
@@ -40,16 +45,19 @@ class GameEngine():
         self.world.addObstacle(obstacle.x, obstacle.y, obstacle)
 
     def start(self):
+        global CURRENTMODE, EDITMODE
         # Define some variables
         self.toggle = True
         self.simulation_is_running = False
         self.reset_simulation = False
         self.game_not_initialized = True
+        CURRENTMODE = 'Simple'
+        EDITMODE = EditMode.DISABLE
         # Set background
         bg = self.manager.get_theme().get_colour('dark_bg')
         # Set UI
         
-        self.panel = pygame_gui.elements.UIPanel(pygame.Rect(175, 0, self.surfaceWidth - (200 + 175), 75),
+        self.panel = pygame_gui.elements.UIPanel(pygame.Rect(175, 0, self.surfaceWidth - (200 + 175), 125),
                              starting_layer_height=4,
                              manager=self.manager)
         self.gamemode = pygame_gui.elements.UIDropDownMenu(relative_rect=pygame.Rect(1, 1, 200, 30),
@@ -94,6 +102,14 @@ class GameEngine():
                                      manager=self.manager,
                                      container=self.panel,
                                      object_id='#1,2' )
+        
+        self.obstacle_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (350, 35) ,
+                                                               (125,
+                                                                30)),
+                                     text="Drop Obstacle",
+                                     manager=self.manager,
+                                     container=self.panel,
+                                     object_id='#1,2' )
 
         self.editmode_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (485, 0) ,
                                                                (125,
@@ -102,6 +118,13 @@ class GameEngine():
                                      manager=self.manager,
                                      container=self.panel,
                                      object_id='#1,2' )
+
+        self.editmode_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect( (485, 30) ,
+                                                (125, 30) ),
+                                    text="Edit OFF",
+                                    manager=self.manager,
+                                    container=self.panel,
+                                    object_id='#1,2'  )
 
         self.speed_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect( (605, 0) ,
                                                 (125, 30) ),
@@ -115,6 +138,17 @@ class GameEngine():
                                                container=self.panel,
                                                starting_option='100%')
                                                          
+        self.pheromone_evap_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect( (805, 0) ,
+                                                (125, 30) ),
+                                    text="Pheromone evap",
+                                    manager=self.manager,
+                                    container=self.panel,
+                                    object_id='#1,2'  )
+        
+        self.pheromone_evap_button = pygame_gui.elements.UIDropDownMenu(relative_rect=pygame.Rect(935, 1, 100, 30),
+                                               manager=self.manager, options_list=['1%', '5%', '10%', '25%', '50%', '95%'],
+                                               container=self.panel,
+                                               starting_option='1%')
 
         self.toggle_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (75, 0) ,
                                                                (75,
@@ -125,16 +159,27 @@ class GameEngine():
         # Set renderer
         self.renderer = Renderer( self.surface, self.world, bg )
 
+        # Init default gamemode
+        self.prepareGame()
+        self.game_not_initialized = False
+
     def handleEvent(self, _event):
         """"
         Updates all GameEngine related events like keyboard press, mouse press, exit detection and so on.
         :Return: a boolean to keep track whether or not we should close the window.
         """
+        global EDITMODE
         is_running = True
         if _event.type == pygame.QUIT:
             is_running = False
         if _event.type == pygame.MOUSEBUTTONUP:
-            print ( pygame.mouse.get_pos() )
+            x, y = pygame.mouse.get_pos()
+            print ( x, y )
+            if EDITMODE == EditMode.ANTHILL_MODE:
+                self.addAnthilAt( x , y , 100 )
+                EDITMODE == EditMode.ENABLE
+
+
         return is_running
 
     def updateSpiders(self, dt):
@@ -142,6 +187,7 @@ class GameEngine():
         This function runs over every spider in the world/terrain and updates their position.
         Similar to updateAnts() function.
         """
+        global MOVESPEED
         for spider in self.world.getSpiders():
             spider_direction = spider.getDirection()
             dirX, dirY = spider_direction.getVec()
@@ -170,6 +216,7 @@ class GameEngine():
         """
         This function runs over every ant in the world/terrain which belongs to a certain anthill and updates their position.
         """
+        global MOVESPEED
         for ant in anthil.getAnts():
             ant_direction = ant.getDirection()
             dirX, dirY = ant_direction.getVec()
@@ -195,6 +242,7 @@ class GameEngine():
             ant.direction.update(dt)
     
     def updateUI(self, dt):
+        global EDITMODE
         # Check toggle panel
         if self.toggle_button.check_pressed():
             self.toggle = not self.toggle
@@ -214,7 +262,8 @@ class GameEngine():
                 if self.game_not_initialized:
                     self.prepareGame()
                     self.game_not_initialized = not self.game_not_initialized
-                self.start_simulation_button.set_text("Stop!")
+                else:
+                    self.start_simulation_button.set_text("Stop!")
             else:
                 self.start_simulation_button.set_text("Start!")
         
@@ -222,11 +271,34 @@ class GameEngine():
         if self.reset_button.check_pressed():
             self.reset_simulation = not self.reset_simulation
             self.simulation_is_running = False
-            self.game_not_initialized = not self.game_not_initialized
+            self.game_not_initialized = True # check this if something goes wrong
+
+        # Check speed
+        self.updateSpeed()
 
         # update buttons interaction
         self.toggleEnableDisableCustomizationButtons()
-        
+
+        # check if we should switch to editmode
+        if self.editmode_button.check_pressed():
+            if not self.simulation_is_running: # if we are not in simulation mode, allow edit mode
+                if EDITMODE == EditMode.ENABLE:
+                    EDITMODE = EditMode.DISABLE
+                    self.editmode_label.set_text("Edit OFF")
+                    self.toggleEnableDisableCustomizationButtons()
+                else:
+                    EDITMODE = EditMode.ENABLE
+                    self.editmode_label.set_text("Edit ON")
+                    self.toggleEnableDisableCustomizationButtons()
+        # check other edit modes
+        if self.anthill_button.check_pressed() and (EDITMODE == EditMode.ENABLE):
+            EDITMODE = EditMode.ANTHILL_MODE
+        if self.spider_button.check_pressed() and (EDITMODE == EditMode.ENABLE):
+            EDITMODE = EditMode.SPIDER_MODE
+        if self.ressource_button.check_pressed() and (EDITMODE == EditMode.ENABLE):
+            EDITMODE = EditMode.RESSOURCE_MODE
+        if self.obstacle_button.check_pressed() and (EDITMODE == EditMode.ENABLE):
+            EDITMODE = EditMode.OBSTACLE_MODE
 
     def update(self, dt):
         self.manager.update(dt)
@@ -243,6 +315,7 @@ class GameEngine():
             self.resetWorld()
             self.start_simulation_button.set_text("Start!")
             self.reset_simulation = not self.reset_simulation #fix bug with button ??
+        
 
         """
         print('simulation status -> ', self.simulation_is_running)
@@ -256,21 +329,50 @@ class GameEngine():
         self.renderer.render()
 
     def resetWorld(self):
+        global EDITMODE
         self.world.reset()
+        self.simulation_is_running = False
+        EDITMODE = EditMode.DISABLE
+        self.editmode_label.set_text("Edit OFF")
     
+    def updateSpeed(self):
+        global MOVESPEED
+        if self.speed_dropdown.selected_option == '10%':
+            MOVESPEED = DEFAULTMOVESPEED * 0.1
+        elif self.speed_dropdown.selected_option == '50%':
+            MOVESPEED = DEFAULTMOVESPEED * 0.5
+        elif self.speed_dropdown.selected_option == '100%':
+            MOVESPEED = DEFAULTMOVESPEED
+        elif self.speed_dropdown.selected_option == '200%':
+            MOVESPEED = DEFAULTMOVESPEED * 2.0
+        elif self.speed_dropdown.selected_option == '400%':
+            MOVESPEED = DEFAULTMOVESPEED * 4.0
     def prepareGame(self):
         if self.game_not_initialized:
+            self.resetWorld()
             selected_gamemode = self.gamemode.selected_option
-
             if selected_gamemode == 'Simple':
                 self.initGame( 1, 100 )
             elif selected_gamemode == '2 Species':
                 self.initGame( 2, 100 )
             elif selected_gamemode == '4 Species':
                 self.initGame( 4, 100 )
+            #self.game_not_initialized = not self.game_not_initialized
     
     def toggleEnableDisableCustomizationButtons(self):
         if not self.game_not_initialized:
             self.gamemode.disable()
         else:
             self.gamemode.enable()
+        
+        if EDITMODE == EditMode.DISABLE:
+                self.anthill_button.disable()
+                self.spider_button.disable()
+                self.ressource_button.disable()
+                self.obstacle_button.disable()
+        elif EDITMODE == EditMode.ENABLE:
+                self.anthill_button.enable()
+                self.spider_button.enable()
+                self.ressource_button.enable()
+                self.obstacle_button.enable()
+            

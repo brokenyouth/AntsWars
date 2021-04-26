@@ -1,6 +1,12 @@
 import math
 import random
 import pygame as pg
+from enum import Enum
+
+global MOVESPEED
+global PHEROMONEDISPRATE
+global CURRENTMODE
+global EDITMODE
 
 TILZSIZE = 16
 PI = 3.1415
@@ -8,13 +14,24 @@ PI = 3.1415
 WIN_WIDTH = 1600
 WIN_HEIGHT = 900
 
+DEFAULTMOVESPEED = 100
 MOVESPEED = 100
 ROTATIONSPEED = 5
 DIRECTIONRANGE = PI * 0.30
 DIRECTIONUPDATERATE = 0.125
+PHEROMONEDISPRATE = 0.1
 
 DEFAULT_ANTHIL_POSITIONS = [ (245, 145), (1345, 145), (245, 745), (1345, 745) ]
 DEFAULT_ANTHIL_COLOR = [ (255, 0, 0, 255) , (0, 255, 0, 255), (0, 75, 255, 255), (255, 255, 0, 255) ]
+
+class EditMode(Enum):
+    RESSOURCE_MODE = 1
+    OBSTACLE_MODE = 2
+    ANTHILL_MODE = 3
+    SPIDER_MODE = 4
+    ENABLE = 5
+    DISABLE = 6
+
 
 def pgfill(surface, color):
     """Fill all pixels of the surface with color, preserve transparency."""
