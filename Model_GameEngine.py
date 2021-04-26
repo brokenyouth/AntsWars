@@ -4,6 +4,7 @@ from Model_Ant import *
 from Model_Obstacle import *
 from Model_Anthil import *
 from Model_Spider import *
+from Model_Ressource import *
 from Renderer import *
 from Util import *
 
@@ -19,6 +20,20 @@ class GameEngine():
 
         self.surfaceWidth = self.surface.get_width()
         self.surfaceHeight = self.surface.get_height()
+    
+    def addRessourceAt(self, x, y):
+        ressource = Ressource( x , y )
+        self.world.addRessource( ressource.x , ressource.y , ressource )
+
+    def addObstacleAt(self, x, y):
+        obstacle = Obstacle( x, y, (255, 255, 255, 255) )
+        self.world.addObstacle(obstacle.x, obstacle.y, obstacle)
+    
+    def addSpiderAt(self, x, y):
+        spider = Spider( x, y, getRandRange( 2 * PI ), 0 )
+        spider.lastDirectionUpdate = getRandUnder(100) * 0.01 * DIRECTIONUPDATERATE
+
+        self.world.addSpider(spider.x, spider.y, spider)
 
     def addAnthilAt(self, x, y, size):
         rnd = random.randrange(4)
@@ -177,8 +192,12 @@ class GameEngine():
             print ( x, y )
             if EDITMODE == EditMode.ANTHILL_MODE:
                 self.addAnthilAt( x , y , 100 )
-                EDITMODE == EditMode.ENABLE
-
+            elif EDITMODE == EditMode.SPIDER_MODE:
+                self.addSpiderAt( x, y )
+            elif EDITMODE == EditMode.RESSOURCE_MODE:
+                self.addRessourceAt( x , y )
+            elif EDITMODE == EditMode.OBSTACLE_MODE:
+                self.addObstacleAt( x , y )
 
         return is_running
 
@@ -291,13 +310,13 @@ class GameEngine():
                     self.editmode_label.set_text("Edit ON")
                     self.toggleEnableDisableCustomizationButtons()
         # check other edit modes
-        if self.anthill_button.check_pressed() and (EDITMODE == EditMode.ENABLE):
+        if self.anthill_button.check_pressed():
             EDITMODE = EditMode.ANTHILL_MODE
-        if self.spider_button.check_pressed() and (EDITMODE == EditMode.ENABLE):
+        if self.spider_button.check_pressed():
             EDITMODE = EditMode.SPIDER_MODE
-        if self.ressource_button.check_pressed() and (EDITMODE == EditMode.ENABLE):
+        if self.ressource_button.check_pressed():
             EDITMODE = EditMode.RESSOURCE_MODE
-        if self.obstacle_button.check_pressed() and (EDITMODE == EditMode.ENABLE):
+        if self.obstacle_button.check_pressed():
             EDITMODE = EditMode.OBSTACLE_MODE
 
     def update(self, dt):

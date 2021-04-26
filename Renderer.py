@@ -19,6 +19,11 @@ class Renderer:
 
         self.anthils = self.terrain.getAnthils()
     
+    def renderRessources(self):
+        for ressource in self.terrain.getRessources():
+            x , y = ressource.getX(), ressource.getY()
+            pygame.draw.ellipse ( self.surface, (144, 144, 144, 255) , (ressource.x, ressource.y, TILZSIZE*2, TILZSIZE*2) )
+    
     def renderSpider(self, spider):
         x, y = spider.getX(), spider.getY()
         rotated = pygame.transform.rotate(self.spiderImage, -toDegree( spider.direction.angle ))
@@ -56,6 +61,7 @@ class Renderer:
         self.renderAnthils()
         # render spiders
         self.renderSpiders()
-       
+        # render ressources
+        self.renderRessources()
         
                 
