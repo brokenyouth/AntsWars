@@ -1,5 +1,10 @@
 import pygame
 import math
+from Model_Ant import *
+from Model_Obstacle import *
+from Model_Anthil import *
+from Model_Spider import *
+from Model_Ressource import *
 from Util import *
 
 class Renderer:
@@ -17,25 +22,18 @@ class Renderer:
         self.spiderImage = pygame.transform.flip(self.spiderImage, False, False)
         self.spiderImage = pygame.transform.smoothscale(self.spiderImage, (int(55), int(25) ) )
 
-        self.anthils = self.terrain.getAnthils()
     
-    def renderRessources(self):
-        for ressource in self.terrain.getRessources():
-            x , y = ressource.getX(), ressource.getY()
-            pygame.draw.ellipse ( self.surface, (144, 144, 144, 255) , (ressource.x, ressource.y, TILZSIZE*2, TILZSIZE*2) )
+    def renderRessource(self, ressource):
+        x , y = ressource.getX(), ressource.getY()
+        pygame.draw.ellipse ( self.surface, (144, 144, 144, 255) , (ressource.x, ressource.y, TILZSIZE*2, TILZSIZE*2) )
     
     def renderSpider(self, spider):
         x, y = spider.getX(), spider.getY()
         rotated = pygame.transform.rotate(self.spiderImage, -toDegree( spider.direction.angle ))
         self.surface.blit(rotated, (x ,y ))
 
-    def renderSpiders(self):
-        for spider in self.terrain.getSpiders():
-            self.renderSpider(spider)
-    
-    def renderObtsacles(self):
-        for obstacle in self.terrain.getObstacles():
-            square = pygame.draw.rect( self.surface, obstacle.color, (obstacle.x, obstacle.y, TILZSIZE, TILZSIZE) )
+    def renderObtsacle(self, obstacle):
+        square = pygame.draw.rect( self.surface, obstacle.color, (obstacle.x, obstacle.y, TILZSIZE, TILZSIZE) )
 
     def renderAnt(self, ant):
         x , y = ant.getX(), ant.getY()
@@ -48,20 +46,26 @@ class Renderer:
         circ = pygame.draw.circle( self.surface, anthil.color, (x, y), 10, 0 )
         for ant in anthil.getAnts():
             self.renderAnt(ant)
-    
-    def renderAnthils(self):
-        for anthil in self.terrain.getAnthils():
-            self.renderAnthil(anthil)
+
+    def renderWorld(self):
+        for y in range( int ( WIN_HEIGHT // TILZSIZE)  ):
+            for x in range( int ( WIN_WIDTH // TILZSIZE) ):
+                
+                _object = self.terrain.getAt( x , y )
+                if isinstance( _object, Anthil ):
+                    self.renderAnthil( _object )
+                elif isinstance( _object, Spider ):
+                    self.renderSpider( _object )
+                elif isinstance( _object, Ressource ):
+                    self.renderRessource( _object )
+                elif isinstance( _object, Obstacle ):
+                    self.renderObtsacle( _object )
+
+
             
     def render(self):
         self.surface.fill(self.background) # effacer l'écran
-        # render obstacles
-        self.renderObtsacles()
-        # render anthils
-        self.renderAnthils()
-        # render spiders
-        self.renderSpiders()
-        # render ressources
-        self.renderRessources()
+        # render world entities
+        self.renderWorld()
         
                 

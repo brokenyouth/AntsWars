@@ -17,7 +17,7 @@ WIN_HEIGHT = 900
 DEFAULTMOVESPEED = 100
 MOVESPEED = 100
 ROTATIONSPEED = 5
-DIRECTIONRANGE = PI * 0.30
+DIRECTIONRANGE = PI * 0.1
 DIRECTIONUPDATERATE = 0.125
 PHEROMONEDISPRATE = 0.1
 
@@ -79,7 +79,7 @@ class Direction:
 
     def update(self, dt):
         self.updateVec()
-        # la direction de la fourmis est le produit vectoriel entre sa normale et sa target
+        # la direction de la fourmis est le produit scalaire* entre sa normale et sa target
         dir_dt = dot(self.targetX, self.targetY, -self.y, self.x )
         self.angle += ( (ROTATIONSPEED * dir_dt * dt) )
 

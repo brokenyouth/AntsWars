@@ -23,17 +23,17 @@ class GameEngine():
     
     def addRessourceAt(self, x, y):
         ressource = Ressource( x , y )
-        self.world.addRessource( ressource.x , ressource.y , ressource )
+        self.world.addEntity( ressource.x , ressource.y , ressource )
 
     def addObstacleAt(self, x, y):
         obstacle = Obstacle( x, y, (255, 255, 255, 255) )
-        self.world.addObstacle(obstacle.x, obstacle.y, obstacle)
+        self.world.addEntity(obstacle.x, obstacle.y, obstacle)
     
     def addSpiderAt(self, x, y):
         spider = Spider( x, y, getRandRange( 2 * PI ), 0 )
         spider.lastDirectionUpdate = getRandUnder(100) * 0.01 * DIRECTIONUPDATERATE
 
-        self.world.addSpider(spider.x, spider.y, spider)
+        self.world.addEntity(spider.x, spider.y, spider)
 
     def addAnthilAt(self, x, y, size):
         rnd = random.randrange(4)
@@ -44,20 +44,21 @@ class GameEngine():
             ant.lastDirectionUpdate = getRandUnder(100) * 0.01 * DIRECTIONUPDATERATE
             ant.color = color
             anthil.addAnt( ant )
-        self.world.addAnthil( x, y, anthil )
+        self.world.addEntity( x, y, anthil )
     
     def initGame(self, nbAnthils, nbAntPerAnthil ):
         for n in range(nbAnthils):
             x, y = DEFAULT_ANTHIL_POSITIONS[ n ]
             self.addAnthilAt( x, y, nbAntPerAnthil )
+            #print( self.world.getAt( x, y ) )
         
         spider = Spider( random.randrange(0, self.worldSizeX) * TILZSIZE, random.randrange(0, self.worldSizeY) * TILZSIZE, getRandRange( 2 * PI ), 0 )
         spider.lastDirectionUpdate = getRandUnder(100) * 0.01 * DIRECTIONUPDATERATE
 
-        self.world.addSpider(spider.x, spider.y, spider)
+        self.world.addEntity(spider.x, spider.y, spider)
         
         obstacle = Obstacle( self.surfaceWidth//2, self.surfaceHeight//2, (255, 255, 255, 255) )
-        self.world.addObstacle(obstacle.x, obstacle.y, obstacle)
+        self.world.addEntity(obstacle.x, obstacle.y, obstacle)
 
     def start(self):
         global CURRENTMODE, EDITMODE
@@ -189,49 +190,66 @@ class GameEngine():
             is_running = False
         if _event.type == pygame.MOUSEBUTTONUP:
             x, y = pygame.mouse.get_pos()
-            print ( x, y )
-            if EDITMODE == EditMode.ANTHILL_MODE:
-                self.addAnthilAt( x , y , 100 )
-            elif EDITMODE == EditMode.SPIDER_MODE:
-                self.addSpiderAt( x, y )
-            elif EDITMODE == EditMode.RESSOURCE_MODE:
-                self.addRessourceAt( x , y )
-            elif EDITMODE == EditMode.OBSTACLE_MODE:
-                self.addObstacleAt( x , y )
+            # if the mouse click is inside the panel region, and the panel is visible,
+            # or if we are in any editmode and clicked inside the toggle button,
+            # do nothing.
+            # this is hardcoded for 1600*900 resolution
+            if self.toggle and ( ( x >= 175 and y >= 0 ) and ( x <= self.surfaceWidth - (200 + 175) and y <= 125 )
+                            or ( (x >= 75 and y >= 0 ) and ( x <= 150 and y <= 50 ) ) ):
+                return True
+            else:
+                if EDITMODE == EditMode.ANTHILL_MODE:
+                    self.addAnthilAt( x , y , 100 )
+                    # check if game was initialized here later
+                elif EDITMODE == EditMode.SPIDER_MODE:
+                    self.addSpiderAt( x, y )
+                elif EDITMODE == EditMode.RESSOURCE_MODE:
+                    self.addRessourceAt( x , y )
+                elif EDITMODE == EditMode.OBSTACLE_MODE:
+                    self.addObstacleAt( x , y )
 
         return is_running
 
-    def updateSpiders(self, dt):
+    def updateEntities(self, dt):
+        for y in range( int( WIN_HEIGHT // TILZSIZE ) ):
+            for x in range( int (WIN_WIDTH / TILZSIZE ) ):
+                _entity = self.world.getAt( x, y )
+                if isinstance( _entity, Anthil ):
+                    self.updateAnthills( _entity, dt )
+                elif isinstance( _entity, Spider ):
+                    self.updateSpider( _entity, dt )
+
+    def updateSpider(self, spider, dt):
         """
         This function runs over every spider in the world/terrain and updates their position.
         Similar to updateAnts() function.
         """
         global MOVESPEED
-        for spider in self.world.getSpiders():
-            spider_direction = spider.getDirection()
-            dirX, dirY = spider_direction.getVec()
-            x = ((MOVESPEED) * dt) * dirX
-            y = ((MOVESPEED) * dt) * dirY
+        
+        spider_direction = spider.getDirection()
+        dirX, dirY = spider_direction.getVec()
+        x = ((MOVESPEED) * dt) * dirX
+        y = ((MOVESPEED) * dt) * dirY
 
-            if spider.x < 0:
-                x = self.surfaceWidth
-            elif spider.y < 0:
-                y = self.surfaceHeight
-            elif spider.x > self.surfaceWidth:
-                spider.x = 0
-            elif spider.y > self.surfaceHeight:
-                spider.y = 0
-            
-            spider.lastDirectionUpdate += dt
-            if spider.lastDirectionUpdate > DIRECTIONUPDATERATE:
-                randDir = getRandDirectionRange()
-                spider.direction.addTarget(randDir)
-                spider.lastDirectionUpdate = 0
+        if spider.x < 0:
+            x = self.surfaceWidth
+        elif spider.y < 0:
+            y = self.surfaceHeight
+        elif spider.x > self.surfaceWidth:
+            spider.x = 0
+        elif spider.y > self.surfaceHeight:
+            spider.y = 0
+        
+        spider.lastDirectionUpdate += dt
+        if spider.lastDirectionUpdate > DIRECTIONUPDATERATE:
+            randDir = getRandDirectionRange()
+            spider.direction.addTarget(randDir)
+            spider.lastDirectionUpdate = 0
 
-            spider.addPosition(x,y)
-            spider.direction.update(dt)
+        spider.addPosition(x,y)
+        spider.direction.update(dt)
 
-    def updateAnts(self, anthil, dt):
+    def updateAnthills(self, anthil, dt):
         """
         This function runs over every ant in the world/terrain which belongs to a certain anthill and updates their position.
         """
@@ -325,24 +343,13 @@ class GameEngine():
 
         # update world entities if the simulation is running
         if self.simulation_is_running:
-            self.updateSpiders(dt)
-            for anthil in self.world.getAnthils():
-                self.updateAnts(anthil, dt)
+            self.updateEntities(dt)
         
         # reset the world if asked to
         if self.reset_simulation:
             self.resetWorld()
             self.start_simulation_button.set_text("Start!")
             self.reset_simulation = not self.reset_simulation #fix bug with button ??
-        
-
-        """
-        print('simulation status -> ', self.simulation_is_running)
-        print('start button simulation status -> ', self.start_simulation_button)
-        print('reset simulation status -> ', self.reset_simulation)
-        print('reset button simulation status -> ', self.reset_button)
-        """
-
         
     def render(self):
         self.renderer.render()
