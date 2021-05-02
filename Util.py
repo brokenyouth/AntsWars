@@ -1,14 +1,22 @@
+# DO NOT TOUCH THIS!
+# -----------------
 import math
 import random
 import pygame as pg
 from enum import Enum
 
+# DO NOT TOUCH THIS!
+# -----------------
 global MOVESPEED
 global PHEROMONEDISPRATE
 global CURRENTMODE
 global EDITMODE
+global DRAGFLAG
 
-TILZSIZE = 16
+# DO NOT TOUCH THIS!
+# -----------------
+
+TILZSIZE = 18
 PI = 3.1415
 
 WIN_WIDTH = 1600
@@ -19,10 +27,26 @@ MOVESPEED = 100
 ROTATIONSPEED = 5
 DIRECTIONRANGE = PI * 0.1
 DIRECTIONUPDATERATE = 0.125
+
+PHEROMONEDEPOSITRATE = 0.25
 PHEROMONEDISPRATE = 0.1
 
 DEFAULT_ANTHIL_POSITIONS = [ (245, 145), (1345, 145), (245, 745), (1345, 745) ]
 DEFAULT_ANTHIL_COLOR = [ (255, 0, 0, 255) , (0, 255, 0, 255), (0, 75, 255, 255), (255, 255, 0, 255) ]
+
+DRAGFLAG = False
+
+ANT_SIZEX, ANT_SIZEY = (107 // TILZSIZE), (71 // TILZSIZE)
+ANTHILL_SIZEX, ANTHILL_SIZEY = 25, 25 
+SPIDER_SIZEX, SPIDER_SIZEY = 55, 25
+PHEROMONE_SIZEX, PHEROMONE_SIZEY = 11, 7
+
+
+# DO NOT TOUCH THIS!
+# -----------------
+
+def flip_biased_coin(p=0.05):
+        return 1 if random.random() < p else 0
 
 class EditMode(Enum):
     RESSOURCE_MODE = 1
@@ -57,6 +81,15 @@ def getRandUnder(val):
 
 def toDegree(a):
     return (180 * a) / PI
+
+def vectorLength(x, y):
+    return math.sqrt( (x * x) + (y * y) )
+
+def getAngleBetween( x1, y1, x2, y2 ):
+    return math.atan2( y2 - y1, x2 - x1 )
+
+def sameCell( x1, y1, x2, y2 ):
+    return ( math.floor(x1) == math.floor(x2) ) and ( math.floor(y1) == math.floor(y2) )
 
 class Direction:
     def __init__(self, _angle, _rotationspeed = 20):
@@ -94,7 +127,17 @@ class Direction:
     def addTarget(self, _a):
         self.targetangle += _a
         self.updateTarget()
+    
+    def instantRedirect(self, _a):
+        self.targetangle = _a
+        self.updateTarget()
+        self.updateVec()
 
     def getAngle(self):
         return self.angle % (2*PI)
-    
+
+"""   
+class State:
+
+    def __init__(self):
+        self."""

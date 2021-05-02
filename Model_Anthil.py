@@ -2,14 +2,19 @@ import pygame
 
 class Anthil:
 
-    def __init__(self, _x, _y, _size, _color):
+    def __init__(self, _x, _y, _size, _color, _id):
         self.x = _x
         self.y = _y
         self.size = _size
         self.color = _color
+        self.id = _id
 
         self.ants = []
 
+        self.score = 0
+
+    def getId(self):
+        return self.id
     def addAnt(self, _ant):
         self.ants.append(_ant)
     
@@ -21,3 +26,9 @@ class Anthil:
     
     def getAnts(self):
         return self.ants
+
+    def getScore(self):
+        return self.score
+    
+    def addScore(self):
+        self.score += 1

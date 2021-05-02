@@ -5,6 +5,7 @@ from Model_Obstacle import *
 from Model_Anthil import *
 from Model_Spider import *
 from Model_Ressource import *
+from Model_Pheromone import *
 from Renderer import *
 from Util import *
 
@@ -22,26 +23,30 @@ class GameEngine():
         self.surfaceHeight = self.surface.get_height()
     
     def addRessourceAt(self, x, y):
+        # bound check
         ressource = Ressource( x , y )
         self.world.addEntity( ressource.x , ressource.y , ressource )
 
     def addObstacleAt(self, x, y):
+        # bound check
         obstacle = Obstacle( x, y, (255, 255, 255, 255) )
         self.world.addEntity(obstacle.x, obstacle.y, obstacle)
     
     def addSpiderAt(self, x, y):
+        # bound check
         spider = Spider( x, y, getRandRange( 2 * PI ), 0 )
         spider.lastDirectionUpdate = getRandUnder(100) * 0.01 * DIRECTIONUPDATERATE
 
         self.world.addEntity(spider.x, spider.y, spider)
 
-    def addAnthilAt(self, x, y, size):
-        rnd = random.randrange(4)
-        color = DEFAULT_ANTHIL_COLOR[ rnd % len(DEFAULT_ANTHIL_COLOR) ]
-        anthil = Anthil( x , y  , size, color )
+    def addAnthilAt(self, x, y, size, _id):
+        # bound check
+        color = DEFAULT_ANTHIL_COLOR[ _id ]
+        anthil = Anthil( x , y  , size, color, _id )
         for i in range(size):
-            ant = Ant( x, y, getRandRange( 2 * PI ), color, i )
+            ant = Ant( x, y, getRandRange( 2 * PI ), color, _id, AntState.EXPLORE )
             ant.lastDirectionUpdate = getRandUnder(100) * 0.01 * DIRECTIONUPDATERATE
+            ant.lastPheromoneUpdate = getRandUnder(100) * 0.01 * PHEROMONEDEPOSITRATE
             ant.color = color
             anthil.addAnt( ant )
         self.world.addEntity( x, y, anthil )
@@ -49,7 +54,7 @@ class GameEngine():
     def initGame(self, nbAnthils, nbAntPerAnthil ):
         for n in range(nbAnthils):
             x, y = DEFAULT_ANTHIL_POSITIONS[ n ]
-            self.addAnthilAt( x, y, nbAntPerAnthil )
+            self.addAnthilAt( x, y, nbAntPerAnthil, n )
             #print( self.world.getAt( x, y ) )
         
         spider = Spider( random.randrange(0, self.worldSizeX) * TILZSIZE, random.randrange(0, self.worldSizeY) * TILZSIZE, getRandRange( 2 * PI ), 0 )
@@ -161,10 +166,10 @@ class GameEngine():
                                     container=self.panel,
                                     object_id='#1,2'  )
         
-        self.pheromone_evap_button = pygame_gui.elements.UIDropDownMenu(relative_rect=pygame.Rect(935, 1, 100, 30),
-                                               manager=self.manager, options_list=['1%', '5%', '10%', '25%', '50%', '95%'],
+        self.pheromone_evap_dropdown = pygame_gui.elements.UIDropDownMenu(relative_rect=pygame.Rect(935, 1, 100, 30),
+                                               manager=self.manager, options_list=['10%', '25%', '50%', '95%'],
                                                container=self.panel,
-                                               starting_option='1%')
+                                               starting_option='25%')
 
         self.toggle_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (75, 0) ,
                                                                (75,
@@ -185,6 +190,7 @@ class GameEngine():
         :Return: a boolean to keep track whether or not we should close the window.
         """
         global EDITMODE
+        global DRAGFLAG
         is_running = True
         if _event.type == pygame.QUIT:
             is_running = False
@@ -199,14 +205,22 @@ class GameEngine():
                 return True
             else:
                 if EDITMODE == EditMode.ANTHILL_MODE:
-                    self.addAnthilAt( x , y , 100 )
+                    self.addAnthilAt( x , y , 100, random.randrange(4) )
                     # check if game was initialized here later
                 elif EDITMODE == EditMode.SPIDER_MODE:
                     self.addSpiderAt( x, y )
                 elif EDITMODE == EditMode.RESSOURCE_MODE:
                     self.addRessourceAt( x , y )
+                    print('Ressource at {} / {}'.format(x,y))
                 elif EDITMODE == EditMode.OBSTACLE_MODE:
-                    self.addObstacleAt( x , y )
+                    DRAGFLAG = False
+                    EDITMODE = EditMode.ENABLE
+        if _event.type == pygame.MOUSEBUTTONDOWN:
+            if EDITMODE == EditMode.OBSTACLE_MODE:
+                DRAGFLAG = True
+        if DRAGFLAG and (EDITMODE == EditMode.OBSTACLE_MODE):
+            x, y = pygame.mouse.get_pos()
+            self.addObstacleAt( x , y )
 
         return is_running
 
@@ -218,6 +232,7 @@ class GameEngine():
                     self.updateAnthills( _entity, dt )
                 elif isinstance( _entity, Spider ):
                     self.updateSpider( _entity, dt )
+        self.updatePheromones()
 
     def updateSpider(self, spider, dt):
         """
@@ -248,6 +263,112 @@ class GameEngine():
 
         spider.addPosition(x,y)
         spider.direction.update(dt)
+    
+    def antAI(self, ant, dt):
+        """
+        Agent based model AI for each ant
+        Will decide of it's next actions e.g pick up a ressource, return home, explore, or fight with spider.
+        When an Ant finds a ressource, it will take it back home and deposit pheromones on the way.
+        When an Ant smells a pheromone, it will follow it.
+        When an Ant interacts with a spider, it will fight against it.
+        When an Ant is in None of these states, it will explore it's environment.
+        """
+        ant.lastDirectionUpdate += dt
+        ant.lastPheromoneUpdate += dt
+
+        # Check if the ant has interacted with any ressource within a radius
+        # ------------------------------------------------------------------
+        self.checkRessource( ant )
+        # -------------------------------------------------------------------
+        # Check if the ant is near/at home.
+        # ------------------------------------------------------------------
+        self.checkAnthill( ant ) 
+        # -------------------------------------------------------------------
+        # Check if the ant smells a pheromone
+        # ------------------------------------------------------------------
+        self.checkPheromones( ant )
+        # -------------------------------------------------------------------
+        # Explore environment
+        # ------------------------------------------------------------------
+        self.checkState(ant)
+        # ------------------------------------------------------------------
+
+
+    def checkAnthill(self, ant):
+        xhome, yhome = ant.homePosition
+        anthill = self.world.getAt( math.floor(xhome // TILZSIZE) , math.floor(yhome // TILZSIZE) )
+        if vectorLength( (ant.x - xhome), (ant.y - yhome) ) < TILZSIZE: # is the ant at home
+            if ant.getId() == anthill.getId(): # if the ant belongs to this anthill (note: this also works for mutltiple anthill with same color)
+                ant.setEnergy(ant.maxEnergy) # refill energy
+                if ant.getIsCarryingRessource(): # if the want was carrying a ressource, add team score
+                    anthill.addScore()
+                ant.setCarryingRessource(False) # set ant as not carrying anymore
+                ant.setState( AntState.EXPLORE )
+                    
+
+    def checkPheromones(self, ant):
+        in_range, pheromone = self.world.hasPheromoneInRange( ant.x, ant.y ) # is there a pheromone in range?
+        if in_range:
+            if ant.color == pheromone.color :# is this a pheromone for my team?
+                # calculate new ant direction
+                angle = pheromone.angleToRessource
+                ant.direction.instantRedirect( angle )
+
+                
+
+    def checkRessource(self, ant):
+        in_range, ressource = self.world.hasRessourceInRange( ant.x, ant.y ) # is there a ressource in range?
+        if in_range and (type(ressource) == Ressource):
+            if not ant.getIsCarryingRessource(): # if the ant isn't carrying something already
+                angle = getAngleBetween( ant.x, ant.y, ressource.x, ressource.y ) # get the ant to go towards the ressource direction
+                ant.direction.instantRedirect( angle )
+                if not sameCell ( ant.x, ant.y, ressource.x, ressource.y ): 
+                    ressource.take() # drop ressource global quantity
+                    ant.lastKnownRessource = ressource
+                    ant.setCarryingRessource(True) # set ant as carrying ressource
+                    ant.setEnergy(ant.maxEnergy // 2) # give her some energy
+                    ant.setState( AntState.TOHOME ) # make her go home
+                    ant.dropEnergy(5)
+
+    def checkState(self, ant):
+        
+        if ant.getState( ) == AntState.EXPLORE:
+            if ant.lastDirectionUpdate > DIRECTIONUPDATERATE:
+                randDir = getRandDirectionRange()
+                ant.direction.addTarget(randDir)
+                ant.lastDirectionUpdate = 0
+
+        if ant.getState( ) == AntState.TOHOME:
+            # find home direction
+            xhome, yhome = ant.homePosition
+            angle = getAngleBetween( ant.x, ant.y, xhome, yhome )
+            ant.direction.instantRedirect( angle )
+            if (ant.lastPheromoneUpdate > PHEROMONEDEPOSITRATE) and ant.getEnergy() >= 25:
+                is_there, phero = self.world.hasPheromoneInRange(ant.x, ant.y, distance=ant.detectionRadius)
+                if not is_there: # is there a pheromone in range?
+                    self.depositPheromone( Pheromone( ant.x , ant.y , PheromoneState.Ressource, ant.color, ant.lastKnownRessource.x, ant.lastKnownRessource.y ) )
+                    ant.dropEnergy(25)
+                ant.lastPheromoneUpdate = 0
+
+        if self.checkWall(ant.x, ant.y):
+            ant.setState( AntState.EXPLORE )
+            ant.direction.instantRedirect(PI)
+        
+        """if ant.getIsCarryingRessource() and (ant.getState( ) == AntState.EXPLORE):
+            ant.setState( AntState.TOHOME )"""
+
+    def checkWall(self, newX, newY):
+        return self.world.hasWallAt( newX, newY, self.surfaceWidth, self.surfaceHeight)
+
+    def depositPheromone(self, _phero):
+        self.world.addPheromone( _phero )
+    
+    def updatePheromones(self):
+        global PHEROMONEDISPRATE
+        for p in self.world.getPheromones():
+            p.intensity -= 0.1
+            if (p.intensity < 1) or flip_biased_coin(PHEROMONEDISPRATE / 100):
+                self.world.removePheromone(p)
 
     def updateAnthills(self, anthil, dt):
         """
@@ -269,16 +390,25 @@ class GameEngine():
             elif ant.y > self.surfaceHeight:
                 ant.y = 0
             
-            ant.lastDirectionUpdate += dt
-            if ant.lastDirectionUpdate > DIRECTIONUPDATERATE:
-                randDir = getRandDirectionRange()
-                ant.direction.addTarget(randDir)
-                ant.lastDirectionUpdate = 0
+            self.antAI(ant, dt)
 
-            ant.addPosition(x,y)
+            
+            # bad collision detection
+            # -----------------------
+            if self.checkWall( ant.x + x , ant.y ):
+                x = 0
+                ant.lastDirectionUpdate = DIRECTIONUPDATERATE + 1
+            if self.checkWall( ant.x, ant.y + y ):
+                y = 0
+                ant.lastDirectionUpdate = DIRECTIONUPDATERATE + 1
+            # -----------------------
+            
+            ant.addPosition(x , y)
             ant.direction.update(dt)
     
     def updateUI(self, dt):
+        """
+        """
         global EDITMODE
         # Check toggle panel
         if self.toggle_button.check_pressed():
@@ -312,6 +442,9 @@ class GameEngine():
 
         # Check speed
         self.updateSpeed()
+
+        # Check pheromone rate
+        self.updatePheromoneRate()
 
         # update buttons interaction
         self.toggleEnableDisableCustomizationButtons()
@@ -373,16 +506,28 @@ class GameEngine():
             MOVESPEED = DEFAULTMOVESPEED * 2.0
         elif self.speed_dropdown.selected_option == '400%':
             MOVESPEED = DEFAULTMOVESPEED * 4.0
+
+    def updatePheromoneRate(self):
+        global PHEROMONEDISPRATE
+        if self.pheromone_evap_dropdown.selected_option == "10%":
+            PHEROMONEDISPRATE = 0.10
+        elif self.pheromone_evap_dropdown.selected_option == "25%":
+            PHEROMONEDISPRATE = 0.25
+        elif self.pheromone_evap_dropdown.selected_option == "50%":
+            PHEROMONEDISPRATE = 0.50
+        elif self.pheromone_evap_dropdown.selected_option == "95%":
+            PHEROMONEDISPRATE = 0.95
+
     def prepareGame(self):
         if self.game_not_initialized:
             self.resetWorld()
             selected_gamemode = self.gamemode.selected_option
             if selected_gamemode == 'Simple':
-                self.initGame( 1, 100 )
+                self.initGame( 1, 50 )
             elif selected_gamemode == '2 Species':
-                self.initGame( 2, 100 )
+                self.initGame( 2, 50 )
             elif selected_gamemode == '4 Species':
-                self.initGame( 4, 100 )
+                self.initGame( 4, 150 )
             #self.game_not_initialized = not self.game_not_initialized
     
     def toggleEnableDisableCustomizationButtons(self):
