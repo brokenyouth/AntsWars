@@ -14,21 +14,20 @@ class Renderer:
         self.terrain = _terrain
         self.background = _background
 
+        # Load Ant Image
         self.antImage = pygame.image.load('./data/res/ant_3.png')
         self.antImage = pygame.transform.flip(self.antImage, False, False)
         self.antImage = pygame.transform.smoothscale(self.antImage, ( ANT_SIZEX, ANT_SIZEY ))
 
+        # Load Spider Image
         self.spiderImage = pygame.image.load('./data/res/spider_3.png')
         self.spiderImage = pygame.transform.flip(self.spiderImage, False, False)
         self.spiderImage = pygame.transform.smoothscale(self.spiderImage, ( SPIDER_SIZEX, SPIDER_SIZEY ) )
 
+        # Load Anthill Image
         self.anthillImage = pygame.image.load('./data/res/anthill.png')
         self.anthillImage = pygame.transform.flip(self.anthillImage, False, False)
         self.anthillImage = pygame.transform.smoothscale(self.anthillImage, ( ANTHILL_SIZEX, ANTHILL_SIZEY ) )
-
-        self.pheromoneImage = pygame.image.load('./data/res/marker.png')
-        self.pheromoneImage = pygame.transform.flip(self.pheromoneImage, False, False)
-        self.pheromoneImage = pygame.transform.smoothscale(self.pheromoneImage, ( PHEROMONE_SIZEX , PHEROMONE_SIZEY ) )
 
         self.redAnt = pgfill(self.anthillImage, (255, 0, 0, 255))
         self.blueAnt = pgfill(self.anthillImage, (0, 75, 255, 255))
@@ -56,7 +55,7 @@ class Renderer:
         rotated = pygame.transform.rotate(self.antImage, -toDegree( ant.direction.angle ))
         self.surface.blit(rotated, (x ,y ))
         if ant.getIsCarryingRessource():
-            pygame.draw.ellipse ( self.surface, (144, 144, 144, 255) , (x + 2 * dirX , y + 2 * dirY, 4 , 4) )
+            pygame.draw.ellipse ( self.surface, (144, 144, 144, 255) , (x + 2 * dirX , y + 2 * dirY, 5 , 5) )
     
     def renderAnthil(self, anthil):
         x, y = anthil.getPosition()
@@ -71,7 +70,6 @@ class Renderer:
     def renderWorld(self):
         for y in range( int ( WIN_HEIGHT // TILZSIZE)  ):
             for x in range( int ( WIN_WIDTH // TILZSIZE) ):
-                
                 _object = self.terrain.getAt( x , y )
                 if isinstance( _object, Anthil ):
                     self.renderAnthil( _object )
@@ -81,12 +79,13 @@ class Renderer:
                     self.renderRessource( _object )
                 elif isinstance( _object, Obstacle ):
                     self.renderObtsacle( _object )
+
         for p in self.terrain.getPheromones():
             self.renderPheromone(p)
 
             
     def render(self):
-        self.surface.fill(self.background) # effacer l'écran
+        self.surface.fill(self.background) # clear screen
         # render world entities
         self.renderWorld()
         

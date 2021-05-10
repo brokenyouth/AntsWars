@@ -25,8 +25,10 @@ WIN_HEIGHT = 900
 DEFAULTMOVESPEED = 100
 MOVESPEED = 100
 ROTATIONSPEED = 5
-DIRECTIONRANGE = PI * 0.1
+DIRECTIONRANGE = PI * 0.05
 DIRECTIONUPDATERATE = 0.125
+
+HOMEUPDATERATE = 5
 
 PHEROMONEDEPOSITRATE = 0.25
 PHEROMONEDISPRATE = 0.1
@@ -36,7 +38,7 @@ DEFAULT_ANTHIL_COLOR = [ (255, 0, 0, 255) , (0, 255, 0, 255), (0, 75, 255, 255),
 
 DRAGFLAG = False
 
-ANT_SIZEX, ANT_SIZEY = (107 // TILZSIZE), (71 // TILZSIZE)
+ANT_SIZEX, ANT_SIZEY = (107 // (TILZSIZE//2)), (71 // (TILZSIZE//2))
 ANTHILL_SIZEX, ANTHILL_SIZEY = 25, 25 
 SPIDER_SIZEX, SPIDER_SIZEY = 55, 25
 PHEROMONE_SIZEX, PHEROMONE_SIZEY = 11, 7
@@ -58,7 +60,10 @@ class EditMode(Enum):
 
 
 def pgfill(surface, color):
-    """Fill all pixels of the surface with color, preserve transparency."""
+    """
+    Fill all pixels of the surface with color, preserve transparency.
+    Very bad performence.
+    """
     w, h = surface.get_size()
     r, g, b, _ = color
     for x in range(w):
@@ -93,6 +98,10 @@ def sameCell( x1, y1, x2, y2 ):
 
 class Direction:
     def __init__(self, _angle, _rotationspeed = 20):
+        """
+        Direction class for every moving entity.
+        It will calculate their next direction based on the received 'new' angle.
+        """
         self.angle = _angle
         self.targetangle = _angle
         self.rotationspeed =  _rotationspeed
@@ -111,33 +120,29 @@ class Direction:
         self.targetY = math.sin(self.targetangle)
 
     def update(self, dt):
+        # updates the angle
         self.updateVec()
-        # la direction de la fourmis est le produit scalaire* entre sa normale et sa target
-        dir_dt = dot(self.targetX, self.targetY, -self.y, self.x )
+        dir_dt = dot(self.targetX, self.targetY, -self.y, self.x ) # dot product between the current angle and target angle
         self.angle += ( (ROTATIONSPEED * dir_dt * dt) )
-
 
     def getVec(self):
         return (self.x, self.y)
 
     def setTarget(self, _a):
+        # sets angle value
         self.targetangle = _a
         self.updateTarget()
     
     def addTarget(self, _a):
+        # add angle value
         self.targetangle += _a
         self.updateTarget()
     
     def instantRedirect(self, _a):
+        # instantly redirects to a new direction
         self.targetangle = _a
         self.updateTarget()
         self.updateVec()
 
     def getAngle(self):
         return self.angle % (2*PI)
-
-"""   
-class State:
-
-    def __init__(self):
-        self."""

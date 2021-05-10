@@ -7,7 +7,9 @@ class Obstacle():
 
     def getX(self):
         return self.x
+
     def getY(self):
         return self.y
+        
     def getColor(self):
         return self.color

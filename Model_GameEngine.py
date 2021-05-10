@@ -12,6 +12,14 @@ from Util import *
 
 class GameEngine():
 
+    """
+    Initializes the game engine. ( Controller )
+    Here, all of the simulation is done.
+    All entities and the world itself, aswell as the UI is managed in this class.
+
+    We start by getting a reference to the world, the UI manager (Pygame_GUI) and the surface (Pygame)
+    We define the renderer later on.
+    """
     def __init__(self, _world, _mngr, _surface):
         self.world = _world
         self.manager = _mngr
@@ -23,24 +31,32 @@ class GameEngine():
         self.surfaceHeight = self.surface.get_height()
     
     def addRessourceAt(self, x, y):
-        # bound check
+        """
+        Adds a ressource at position (x, y)
+        """
         ressource = Ressource( x , y )
         self.world.addEntity( ressource.x , ressource.y , ressource )
 
     def addObstacleAt(self, x, y):
-        # bound check
+        """
+        Adds an obstacle at position (x, y)
+        """
         obstacle = Obstacle( x, y, (255, 255, 255, 255) )
         self.world.addEntity(obstacle.x, obstacle.y, obstacle)
     
     def addSpiderAt(self, x, y):
-        # bound check
+        """
+        Adds a spider at position (x, y)
+        """
         spider = Spider( x, y, getRandRange( 2 * PI ), 0 )
         spider.lastDirectionUpdate = getRandUnder(100) * 0.01 * DIRECTIONUPDATERATE
 
         self.world.addEntity(spider.x, spider.y, spider)
 
     def addAnthilAt(self, x, y, size, _id):
-        # bound check
+        """
+        Adds an anthill at position (x, y)
+        """
         color = DEFAULT_ANTHIL_COLOR[ _id ]
         anthil = Anthil( x , y  , size, color, _id )
         for i in range(size):
@@ -52,11 +68,16 @@ class GameEngine():
         self.world.addEntity( x, y, anthil )
     
     def initGame(self, nbAnthils, nbAntPerAnthil ):
+        """
+        Initializes a game mode.
+        Will place 'nbAnthils' anthills of 'nbAntPerAnthil' ants at different position in the world.
+        Will also add a spider, but this can be commented if needed.
+        """
         for n in range(nbAnthils):
             x, y = DEFAULT_ANTHIL_POSITIONS[ n ]
             self.addAnthilAt( x, y, nbAntPerAnthil, n )
-            #print( self.world.getAt( x, y ) )
         
+        """
         spider = Spider( random.randrange(0, self.worldSizeX) * TILZSIZE, random.randrange(0, self.worldSizeY) * TILZSIZE, getRandRange( 2 * PI ), 0 )
         spider.lastDirectionUpdate = getRandUnder(100) * 0.01 * DIRECTIONUPDATERATE
 
@@ -64,8 +85,16 @@ class GameEngine():
         
         obstacle = Obstacle( self.surfaceWidth//2, self.surfaceHeight//2, (255, 255, 255, 255) )
         self.world.addEntity(obstacle.x, obstacle.y, obstacle)
+        """
 
     def start(self):
+        """
+        A function which is called only one time when the app is launched.
+        It sets up some global and local variables needed for the simulation.
+        As well as the Surface and the UI.
+        It also defines a renderer for the world entities.
+        And prepares a default gamemode.
+        """
         global CURRENTMODE, EDITMODE
         # Define some variables
         self.toggle = True
@@ -77,7 +106,6 @@ class GameEngine():
         # Set background
         bg = self.manager.get_theme().get_colour('dark_bg')
         # Set UI
-        
         self.panel = pygame_gui.elements.UIPanel(pygame.Rect(175, 0, self.surfaceWidth - (200 + 175), 125),
                              starting_layer_height=4,
                              manager=self.manager)
@@ -187,7 +215,9 @@ class GameEngine():
     def handleEvent(self, _event):
         """"
         Updates all GameEngine related events like keyboard press, mouse press, exit detection and so on.
+        UI Interaction is also handeled here.
         :Return: a boolean to keep track whether or not we should close the window.
+        ( THE CODE HERE CONTAINS SOME BUGS, BE CAREFUL )
         """
         global EDITMODE
         global DRAGFLAG
@@ -200,31 +230,36 @@ class GameEngine():
             # or if we are in any editmode and clicked inside the toggle button,
             # do nothing.
             # this is hardcoded for 1600*900 resolution
+            # it is also a bit buggy sometimes, careful!
             if self.toggle and ( ( x >= 175 and y >= 0 ) and ( x <= self.surfaceWidth - (200 + 175) and y <= 125 )
                             or ( (x >= 75 and y >= 0 ) and ( x <= 150 and y <= 50 ) ) ):
                 return True
             else:
-                if EDITMODE == EditMode.ANTHILL_MODE:
+                if EDITMODE == EditMode.ANTHILL_MODE: # handle anthill
                     self.addAnthilAt( x , y , 100, random.randrange(4) )
                     # check if game was initialized here later
-                elif EDITMODE == EditMode.SPIDER_MODE:
+                elif EDITMODE == EditMode.SPIDER_MODE: # handle spider
                     self.addSpiderAt( x, y )
-                elif EDITMODE == EditMode.RESSOURCE_MODE:
+                elif EDITMODE == EditMode.RESSOURCE_MODE: # handle ressource
                     self.addRessourceAt( x , y )
                     print('Ressource at {} / {}'.format(x,y))
-                elif EDITMODE == EditMode.OBSTACLE_MODE:
+                elif EDITMODE == EditMode.OBSTACLE_MODE: # handle obstacle
                     DRAGFLAG = False
                     EDITMODE = EditMode.ENABLE
-        if _event.type == pygame.MOUSEBUTTONDOWN:
+        if _event.type == pygame.MOUSEBUTTONDOWN: # handle obstacle drag boolean
             if EDITMODE == EditMode.OBSTACLE_MODE:
                 DRAGFLAG = True
         if DRAGFLAG and (EDITMODE == EditMode.OBSTACLE_MODE):
-            x, y = pygame.mouse.get_pos()
+            x, y = pygame.mouse.get_pos() # add obstacles at mouse position
             self.addObstacleAt( x , y )
 
         return is_running
 
     def updateEntities(self, dt):
+        """
+        All world entities are updated here.
+        Their position and whether or not they're still part of the game (i.e dead or alive)
+        """
         for y in range( int( WIN_HEIGHT // TILZSIZE ) ):
             for x in range( int (WIN_WIDTH / TILZSIZE ) ):
                 _entity = self.world.getAt( x, y )
@@ -232,6 +267,9 @@ class GameEngine():
                     self.updateAnthills( _entity, dt )
                 elif isinstance( _entity, Spider ):
                     self.updateSpider( _entity, dt )
+                elif isinstance( _entity, Ressource ):
+                    if _entity.quantity < 0:
+                        self.world.remove( x , y ) # remove empty ressources
         self.updatePheromones()
 
     def updateSpider(self, spider, dt):
@@ -256,7 +294,7 @@ class GameEngine():
             spider.y = 0
         
         spider.lastDirectionUpdate += dt
-        if spider.lastDirectionUpdate > DIRECTIONUPDATERATE:
+        if spider.lastDirectionUpdate > DIRECTIONUPDATERATE: # give the spider a random new direction
             randDir = getRandDirectionRange()
             spider.direction.addTarget(randDir)
             spider.lastDirectionUpdate = 0
@@ -275,26 +313,31 @@ class GameEngine():
         """
         ant.lastDirectionUpdate += dt
         ant.lastPheromoneUpdate += dt
+        ant.lastHomeUpdate += dt
 
-        # Check if the ant has interacted with any ressource within a radius
-        # ------------------------------------------------------------------
-        self.checkRessource( ant )
-        # -------------------------------------------------------------------
         # Check if the ant is near/at home.
         # ------------------------------------------------------------------
-        self.checkAnthill( ant ) 
+        self.checkAnthill( ant, dt ) 
         # -------------------------------------------------------------------
         # Check if the ant smells a pheromone
         # ------------------------------------------------------------------
-        self.checkPheromones( ant )
+        self.checkPheromones( ant, dt)
+        # -------------------------------------------------------------------
+        # Check if the ant has interacted with any ressource within a radius
+        # ------------------------------------------------------------------
+        self.checkRessource( ant, dt)
         # -------------------------------------------------------------------
         # Explore environment
         # ------------------------------------------------------------------
-        self.checkState(ant)
+        self.checkState(ant, dt)
         # ------------------------------------------------------------------
 
 
-    def checkAnthill(self, ant):
+
+    def checkAnthill(self, ant, dt):
+        """
+        Checks if the ant is around/at home.
+        """
         xhome, yhome = ant.homePosition
         anthill = self.world.getAt( math.floor(xhome // TILZSIZE) , math.floor(yhome // TILZSIZE) )
         if vectorLength( (ant.x - xhome), (ant.y - yhome) ) < TILZSIZE: # is the ant at home
@@ -306,23 +349,32 @@ class GameEngine():
                 ant.setState( AntState.EXPLORE )
                     
 
-    def checkPheromones(self, ant):
-        in_range, pheromone = self.world.hasPheromoneInRange( ant.x, ant.y ) # is there a pheromone in range?
+    def checkPheromones(self, ant, dt):
+        """
+        Checks if an ant smells a pheromone
+        """
+        in_range, pheromone = self.world.hasPheromoneInRange( ant.x, ant.y, distance=2*TILZSIZE ) # is there a pheromone in range?
         if in_range:
             if ant.color == pheromone.color :# is this a pheromone for my team?
                 # calculate new ant direction
+                #if ant.getState() != AntState.EXPLORE: # to avoid obstacle collision block
                 angle = pheromone.angleToRessource
                 ant.direction.instantRedirect( angle )
-
+                ant.direction.update(dt)
                 
 
-    def checkRessource(self, ant):
+    def checkRessource(self, ant, dt):
+        """
+        Checks if an ant found a ressource
+        """
         in_range, ressource = self.world.hasRessourceInRange( ant.x, ant.y ) # is there a ressource in range?
         if in_range and (type(ressource) == Ressource):
             if not ant.getIsCarryingRessource(): # if the ant isn't carrying something already
                 angle = getAngleBetween( ant.x, ant.y, ressource.x, ressource.y ) # get the ant to go towards the ressource direction
-                ant.direction.instantRedirect( angle )
-                if not sameCell ( ant.x, ant.y, ressource.x, ressource.y ): 
+                ant.direction.setTarget( angle )
+                ant.direction.update(dt)
+
+                if vectorLength(ant.x - ressource.x, ant.y - ressource.y) < TILZSIZE: # wtf? 
                     ressource.take() # drop ressource global quantity
                     ant.lastKnownRessource = ressource
                     ant.setCarryingRessource(True) # set ant as carrying ressource
@@ -330,40 +382,54 @@ class GameEngine():
                     ant.setState( AntState.TOHOME ) # make her go home
                     ant.dropEnergy(5)
 
-    def checkState(self, ant):
-        
+    def checkState(self, ant, dt):
+        """
+        Checks current ant state and updates its next move.
+        """
         if ant.getState( ) == AntState.EXPLORE:
             if ant.lastDirectionUpdate > DIRECTIONUPDATERATE:
                 randDir = getRandDirectionRange()
                 ant.direction.addTarget(randDir)
                 ant.lastDirectionUpdate = 0
+            if flip_biased_coin(p = 0.0001): # sometimes the ant will return home and follow her comrades if they found a ressource
+                ant.setState( AntState.TOHOME )
 
         if ant.getState( ) == AntState.TOHOME:
             # find home direction
             xhome, yhome = ant.homePosition
             angle = getAngleBetween( ant.x, ant.y, xhome, yhome )
             ant.direction.instantRedirect( angle )
-            if (ant.lastPheromoneUpdate > PHEROMONEDEPOSITRATE) and ant.getEnergy() >= 25:
-                is_there, phero = self.world.hasPheromoneInRange(ant.x, ant.y, distance=ant.detectionRadius)
-                if not is_there: # is there a pheromone in range?
-                    self.depositPheromone( Pheromone( ant.x , ant.y , PheromoneState.Ressource, ant.color, ant.lastKnownRessource.x, ant.lastKnownRessource.y ) )
-                    ant.dropEnergy(25)
-                ant.lastPheromoneUpdate = 0
+            ant.direction.update(dt)
+            if ant.getIsCarryingRessource():
+                if (ant.lastPheromoneUpdate > PHEROMONEDEPOSITRATE) and ant.getEnergy() >= 25:
+                    # is there a pheromone in range?
+                    is_there, phero = self.world.hasPheromoneInRange(ant.x, ant.y, distance=ant.detectionRadius)
+                    if not is_there:  # if there's one, simply do not nothing - else deposit one
+                        self.depositPheromone( Pheromone( ant.x , ant.y , PheromoneState.Ressource, ant.color, ant.lastKnownRessource.x, ant.lastKnownRessource.y ) )
+                        ant.dropEnergy(25)
+                        ant.lastPheromoneUpdate = 0
 
         if self.checkWall(ant.x, ant.y):
             ant.setState( AntState.EXPLORE )
             ant.direction.instantRedirect(PI)
-        
-        """if ant.getIsCarryingRessource() and (ant.getState( ) == AntState.EXPLORE):
-            ant.setState( AntState.TOHOME )"""
+
+
+ 
 
     def checkWall(self, newX, newY):
+        # is there a wall at the ant 'next' position
         return self.world.hasWallAt( newX, newY, self.surfaceWidth, self.surfaceHeight)
 
     def depositPheromone(self, _phero):
+        """
+        Deposits a pheromone on the world.
+        """
         self.world.addPheromone( _phero )
     
     def updatePheromones(self):
+        """
+        Updates all pheromones and remove expired ones.
+        """
         global PHEROMONEDISPRATE
         for p in self.world.getPheromones():
             p.intensity -= 0.1
@@ -390,7 +456,7 @@ class GameEngine():
             elif ant.y > self.surfaceHeight:
                 ant.y = 0
             
-            self.antAI(ant, dt)
+            self.antAI(ant, dt) # Brain/AI stuff here.
 
             
             # bad collision detection
@@ -408,6 +474,7 @@ class GameEngine():
     
     def updateUI(self, dt):
         """
+        Updates UI based on user inputs.
         """
         global EDITMODE
         # Check toggle panel
@@ -471,6 +538,11 @@ class GameEngine():
             EDITMODE = EditMode.OBSTACLE_MODE
 
     def update(self, dt):
+        """
+        Main game engines update function.
+        It uses all other update_XX methods.
+        And updates the whole app/simulation.
+        """
         self.manager.update(dt)
         self.updateUI(dt)
 
@@ -485,9 +557,17 @@ class GameEngine():
             self.reset_simulation = not self.reset_simulation #fix bug with button ??
         
     def render(self):
+        """
+        Main game engines render function.
+        Will call the renderer to do it's job.
+        """
         self.renderer.render()
 
     def resetWorld(self):
+        """
+        If the user requests to reset the world, this is called.
+        It simply deletes every entity and updates some variables & UI.
+        """
         global EDITMODE
         self.world.reset()
         self.simulation_is_running = False
@@ -495,6 +575,9 @@ class GameEngine():
         self.editmode_label.set_text("Edit OFF")
     
     def updateSpeed(self):
+        """
+        Updates the global MOVESPEED variable's value based on the UI selected option for that.
+        """
         global MOVESPEED
         if self.speed_dropdown.selected_option == '10%':
             MOVESPEED = DEFAULTMOVESPEED * 0.1
@@ -508,6 +591,9 @@ class GameEngine():
             MOVESPEED = DEFAULTMOVESPEED * 4.0
 
     def updatePheromoneRate(self):
+        """
+        Updates the global PHEROMONE_DISPARITION_RATE variable's value based on the UI selected option for that.
+        """
         global PHEROMONEDISPRATE
         if self.pheromone_evap_dropdown.selected_option == "10%":
             PHEROMONEDISPRATE = 0.10
@@ -519,18 +605,24 @@ class GameEngine():
             PHEROMONEDISPRATE = 0.95
 
     def prepareGame(self):
+        """
+        Simply initializes gamemode based on the UI's selected option for that.
+        """
         if self.game_not_initialized:
             self.resetWorld()
             selected_gamemode = self.gamemode.selected_option
             if selected_gamemode == 'Simple':
-                self.initGame( 1, 50 )
+                self.initGame( 1, 100 )
             elif selected_gamemode == '2 Species':
-                self.initGame( 2, 50 )
+                self.initGame( 2, 100 )
             elif selected_gamemode == '4 Species':
-                self.initGame( 4, 150 )
+                self.initGame( 4, 100 )
             #self.game_not_initialized = not self.game_not_initialized
     
     def toggleEnableDisableCustomizationButtons(self):
+        """
+        Turn on/off UI buttons if the simulation is running.
+        """
         if not self.game_not_initialized:
             self.gamemode.disable()
         else:

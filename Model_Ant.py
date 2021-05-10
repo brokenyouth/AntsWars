@@ -28,6 +28,7 @@ class Ant():
 
         self.lastDirectionUpdate = 0
         self.lastPheromoneUpdate = 0
+        self.lastHomeUpdate = 0
 
         self.maxEnergy = 1000
         self.energy = 1000
@@ -43,22 +44,30 @@ class Ant():
     
     def getX(self):
         return self.x
+
     def getY(self):
         return self.y
+
     def getAngle(self):
         return self.direction.getAngle()
+
     def getMoveSpeed(self):
         return self.moveSpeed
+
     def getDirection(self):
         return self.direction
+
     def getRotationSpeed(self):
         return self.rotationspeed
+
     def setPosition(self, x, y):
         self.x = x
         self.y = y
+
     def addPosition(self, x, y):
         self.x += x
         self.y += y    
+        
     def setAngle(self, _a):
         self.angle = _a
     

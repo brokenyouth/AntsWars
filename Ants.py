@@ -9,6 +9,10 @@ import math
 class Ants:
 
     def __init__(self, _width, _height):
+        """
+        Main APP.
+        Intialized the window, surface and UI managers and the game engine!
+        """
         self.windowWidth = _width
         self.windowHeight = _height
         self.window_surface = None
@@ -20,7 +24,7 @@ class Ants:
     def start(self):
         pygame.init()
 
-        pygame.display.set_caption('Ant vs Ant Simulator')
+        pygame.display.set_caption('Ants Simulation')
         self.window_surface = pygame.display.set_mode((self.windowWidth, self.windowHeight))
         self.manager = pygame_gui.UIManager((self.windowWidth, self.windowHeight), 'data/themes/button_theming_test_theme.json')
         self.background = self.manager.get_theme().get_colour('dark_bg')
@@ -29,6 +33,9 @@ class Ants:
         self.gameEngine.start()
 
     def run(self):
+        """
+        Main APP loop
+        """
         is_running = True
         while is_running:
             time_delta = self.clock.tick(60)/1000.0
@@ -45,4 +52,7 @@ class Ants:
 
 
     def handleEvent(self, e):
+        """
+        Let the engine handle the events.
+        """
         return self.gameEngine.handleEvent(e)

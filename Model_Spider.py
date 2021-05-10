@@ -16,20 +16,27 @@ class Spider():
     
     def getX(self):
         return self.x
+
     def getY(self):
         return self.y
+
     def getAngle(self):
         return self.direction.getAngle()
+
     def getMoveSpeed(self):
         return self.moveSpeed
+
     def getDirection(self):
         return self.direction
+
     def setPosition(self, x, y):
         self.x = x
         self.y = y
+
     def addPosition(self, x, y):
         self.x += x
         self.y += y    
+        
     def setAngle(self, _a):
         self.angle = _a
     

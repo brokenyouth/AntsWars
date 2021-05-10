@@ -8,19 +8,19 @@ class Anthil:
         self.size = _size
         self.color = _color
         self.id = _id
+        self.score = 0
 
         self.ants = []
 
-        self.score = 0
-
     def getId(self):
         return self.id
+
     def addAnt(self, _ant):
         self.ants.append(_ant)
-    
+
     def getPosition(self):
         return self.x, self.y
-    
+
     def getAnt(self, _id):
         return self.ants[_id]
     
