@@ -62,7 +62,8 @@ class Terrain():
                 if type( self.grid[ y + ygrid ][ x + xgrid ]  ) == Ressource:
                     found = True
                     u, v = x , y
-                    break
+            if found:
+                break
         return found, self.grid[ v + ygrid ][ u + xgrid ]
     
     def hasAnthillAt(self, x, y, wx, wy):
@@ -72,11 +73,14 @@ class Terrain():
         found = False
         lastphero = None
         for p in self.pheromones: 
-            lastphero = p
             if vectorLength( (x - p.x), (y - p.y) ) < (distance): # find the nearest one
+                lastphero = p
                 found = True
                 break
         return found, lastphero
 
     def removePheromone(self, _p):
         self.pheromones.remove(_p)
+
+    def clearPheromones(self):
+        self.pheromones = []

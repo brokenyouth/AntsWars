@@ -62,7 +62,7 @@ class EditMode(Enum):
 def pgfill(surface, color):
     """
     Fill all pixels of the surface with color, preserve transparency.
-    Very bad performence.
+    Avoid using this in a loop.
     """
     w, h = surface.get_size()
     r, g, b, _ = color
@@ -91,6 +91,9 @@ def vectorLength(x, y):
     return math.sqrt( (x * x) + (y * y) )
 
 def getAngleBetween( x1, y1, x2, y2 ):
+    """
+    Angle between two points.
+    """
     return math.atan2( y2 - y1, x2 - x1 )
 
 def sameCell( x1, y1, x2, y2 ):

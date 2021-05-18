@@ -260,6 +260,7 @@ class GameEngine():
         All world entities are updated here.
         Their position and whether or not they're still part of the game (i.e dead or alive)
         """
+        ressource_amount = 0
         for y in range( int( WIN_HEIGHT // TILZSIZE ) ):
             for x in range( int (WIN_WIDTH / TILZSIZE ) ):
                 _entity = self.world.getAt( x, y )
@@ -268,8 +269,13 @@ class GameEngine():
                 elif isinstance( _entity, Spider ):
                     self.updateSpider( _entity, dt )
                 elif isinstance( _entity, Ressource ):
+                    ressource_amount += 1
                     if _entity.quantity < 0:
                         self.world.remove( x , y ) # remove empty ressources
+
+        if ressource_amount == 0:
+            self.world.clearPheromones()
+            
         self.updatePheromones()
 
     def updateSpider(self, spider, dt):

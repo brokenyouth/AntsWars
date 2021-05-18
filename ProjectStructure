@@ -2,12 +2,12 @@ Model
     Des foumis
     Un terrain ou les fourmis peuvent bouger
     Des obstacles
-    Des fourmis ennemis
-    Des catastrophes naturelles?
+    Des fourmis ennemis?? (not coded)
+    Des catastrophes naturelles? (not coded)
 Controllers
     main loop et input handler
     le controller gère les inputs du joueur (clavier, souris)
-    simule le combat des fourmis
+    simule le comportement des fourmis dans la "nature"
 Views
     partie graphique
-    dessine tout à l'écran
+    dessine le monde et ses entités à l'écran
