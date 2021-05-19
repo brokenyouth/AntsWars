@@ -1,5 +1,5 @@
 from Ants import *
 
-game = Ants(1600, 900)
+game = Ants(1024, 768)
 game.start()
 game.run()

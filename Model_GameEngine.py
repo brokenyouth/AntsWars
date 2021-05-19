@@ -106,21 +106,21 @@ class GameEngine():
         # Set background
         bg = self.manager.get_theme().get_colour('dark_bg')
         # Set UI
-        self.panel = pygame_gui.elements.UIPanel(pygame.Rect(175, 0, self.surfaceWidth - (200 + 175), 125),
+        self.panel = pygame_gui.elements.UIPanel(pygame.Rect(175, 0, self.surfaceWidth - (200 + 175), 170),
                              starting_layer_height=4,
                              manager=self.manager)
-        self.gamemode = pygame_gui.elements.UIDropDownMenu(relative_rect=pygame.Rect(1, 1, 200, 30),
+        self.gamemode = pygame_gui.elements.UIDropDownMenu(relative_rect=pygame.Rect(10, 1, 125, 30),
                                                manager=self.manager, options_list=['Simple', '2 Species', '4 Species'],
                                                container=self.panel,
                                                starting_option='Simple')
-        self.start_simulation_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (25, 35) ,
+        self.start_simulation_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (10, 35) ,
                                                                (75,
                                                                 30)),
                                      text="Start!",
                                      manager=self.manager,
                                      container=self.panel,
                                      object_id='#1,2' )
-        self.reset_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (105, 35) ,
+        self.reset_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (60, 35) ,
                                                                (75,
                                                                 30)),
                                      text="Reset!",
@@ -128,7 +128,7 @@ class GameEngine():
                                      container=self.panel,
                                      object_id='#1,2' )
         
-        self.anthill_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (215, 0) ,
+        self.anthill_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (150, 0) ,
                                                                (125,
                                                                 30)),
                                      text="Drop Anthill",
@@ -136,7 +136,7 @@ class GameEngine():
                                      container=self.panel,
                                      object_id='#1,2' )
 
-        self.spider_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (215, 35) ,
+        self.spider_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (150, 35) ,
                                                                (125,
                                                                 30)),
                                      text="Drop Spider",
@@ -144,7 +144,7 @@ class GameEngine():
                                      container=self.panel,
                                      object_id='#1,2' )
 
-        self.ressource_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (350, 0) ,
+        self.ressource_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (285, 0) ,
                                                                (125,
                                                                 30)),
                                      text="Drop Ressource",
@@ -152,7 +152,7 @@ class GameEngine():
                                      container=self.panel,
                                      object_id='#1,2' )
         
-        self.obstacle_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (350, 35) ,
+        self.obstacle_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (285, 35) ,
                                                                (125,
                                                                 30)),
                                      text="Drop Obstacle",
@@ -160,7 +160,7 @@ class GameEngine():
                                      container=self.panel,
                                      object_id='#1,2' )
 
-        self.editmode_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (485, 0) ,
+        self.editmode_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect( (420, 0) ,
                                                                (125,
                                                                 30)),
                                      text="Edit Mode",
@@ -168,33 +168,33 @@ class GameEngine():
                                      container=self.panel,
                                      object_id='#1,2' )
 
-        self.editmode_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect( (485, 30) ,
+        self.editmode_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect( (420, 30) ,
                                                 (125, 30) ),
                                     text="Edit OFF",
                                     manager=self.manager,
                                     container=self.panel,
                                     object_id='#1,2'  )
 
-        self.speed_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect( (605, 0) ,
-                                                (125, 30) ),
+        self.speed_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect( (40, 65) ,
+                                                (75, 30) ),
                                     text="Speed",
                                     manager=self.manager,
                                     container=self.panel,
                                     object_id='#1,2'  )
 
-        self.speed_dropdown = pygame_gui.elements.UIDropDownMenu(relative_rect=pygame.Rect(700, 1, 100, 30),
+        self.speed_dropdown = pygame_gui.elements.UIDropDownMenu(relative_rect=pygame.Rect(130, 65, 100, 30),
                                                manager=self.manager, options_list=['10%', '50%', '100%', '200%', '400%'],
                                                container=self.panel,
                                                starting_option='100%')
                                                          
-        self.pheromone_evap_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect( (805, 0) ,
+        self.pheromone_evap_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect( (240, 65) ,
                                                 (125, 30) ),
                                     text="Pheromone evap",
                                     manager=self.manager,
                                     container=self.panel,
                                     object_id='#1,2'  )
         
-        self.pheromone_evap_dropdown = pygame_gui.elements.UIDropDownMenu(relative_rect=pygame.Rect(935, 1, 100, 30),
+        self.pheromone_evap_dropdown = pygame_gui.elements.UIDropDownMenu(relative_rect=pygame.Rect(380, 65, 100, 30),
                                                manager=self.manager, options_list=['10%', '25%', '50%', '95%'],
                                                container=self.panel,
                                                starting_option='25%')
@@ -618,11 +618,11 @@ class GameEngine():
             self.resetWorld()
             selected_gamemode = self.gamemode.selected_option
             if selected_gamemode == 'Simple':
-                self.initGame( 1, 100 )
+                self.initGame( 1, 50 )
             elif selected_gamemode == '2 Species':
-                self.initGame( 2, 100 )
+                self.initGame( 2, 50 )
             elif selected_gamemode == '4 Species':
-                self.initGame( 4, 100 )
+                self.initGame( 4, 25 )
             #self.game_not_initialized = not self.game_not_initialized
     
     def toggleEnableDisableCustomizationButtons(self):

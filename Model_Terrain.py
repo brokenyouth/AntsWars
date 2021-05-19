@@ -15,6 +15,7 @@ class Terrain():
         self.height = _height // self.cellSize
 
         self.grid = [[0 for x in range(self.width)] for y in range(self.height)]
+        print("terrain size -> {} / {}".format(self.width, self.height))
 
         self.pheromones = []
 
