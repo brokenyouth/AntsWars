@@ -373,7 +373,8 @@ class GameEngine():
         """
         Checks if an ant found a ressource
         """
-        in_range, ressource = self.world.hasRessourceInRange( ant.x, ant.y ) # is there a ressource in range?
+        in_range, x, y = self.world.hasRessourceInRange( ant.x, ant.y ) # is there a ressource in range?
+        ressource = self.world.getAt(x, y)
         if in_range and (type(ressource) == Ressource):
             if not ant.getIsCarryingRessource(): # if the ant isn't carrying something already
                 angle = getAngleBetween( ant.x, ant.y, ressource.x, ressource.y ) # get the ant to go towards the ressource direction
@@ -622,7 +623,7 @@ class GameEngine():
             elif selected_gamemode == '2 Species':
                 self.initGame( 2, 50 )
             elif selected_gamemode == '4 Species':
-                self.initGame( 4, 25 )
+                self.initGame( 4, 75 )
             #self.game_not_initialized = not self.game_not_initialized
     
     def toggleEnableDisableCustomizationButtons(self):

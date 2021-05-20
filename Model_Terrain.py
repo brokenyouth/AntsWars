@@ -64,8 +64,8 @@ class Terrain():
                     found = True
                     u, v = x , y
             if found:
-                break
-        return found, self.grid[ v + ygrid ][ u + xgrid ]
+                return found, (u+xgrid), (v+ygrid)
+        return found, xgrid, ygrid
     
     def hasAnthillAt(self, x, y, wx, wy):
         return type( self.grid[math.floor(y) // TILZSIZE ][math.floor(x) // TILZSIZE ] ) == Anthil
